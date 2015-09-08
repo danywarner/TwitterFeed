@@ -7,6 +7,7 @@ lib-cov
 *.gz
 
 /config.js
+/texto.txt
 pids
 logs
 results
