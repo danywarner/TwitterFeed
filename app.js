@@ -86,6 +86,7 @@ var getTweets = function(req, res) {
     });
 }
 var getTwitterBanner = function(req,res) {
+	
     twit.get('/users/profile_banner.json', 
     {screen_name:'danywarner'},
     function(data) {
@@ -97,12 +98,71 @@ var getTwitterBanner = function(req,res) {
 
 var sayHello = function(req,res) {
     
-       // res.send(200,"Ejemplo sencillo para leer un feed de twitter con NodeJS\n
-        //    Vaya a /twitter/tweets o twitter/banner para ver la funcionalidad");
-        res.writeHead(200, {'Content-type':'text/plain'});
+    res.writeHead(200, {'Content-type':'text/plain'});
     res.end('Ejemplo sencillo para leer un feed de twitter con NodeJS Vaya a /twitter/tweets o twitter/banner para ver la funcionalidad');
 }
 
+var getFavorites = function(req, res){
+	 twit.get('/favorites/list.json', 
+    {screen_name:'danywarner'},
+    function(data) {
+       var response = {};
+		if(data instanceof Error) {
+			console.log("TWITTER ERROR: "+JSON.stringify(data));
+			res.send(200,response);
+			return;
+		}
+		else {
+			try{
+				response = {tweets:
+					data.map(function(elem){
+						var t = {
+							text:elem.text,
+							profile_image_url:(function(user) {
+								if(user && user.profile_image_url) {
+									return user.profile_image_url;
+								}
+								else {
+									return "";
+								}
+							}(elem.user)),
+							retweet:false
+						}; 
+						if(elem.text && elem.text.substr(0,2) == "RT") {
+							t.text = t.text.substr(t.text.search(":")+2);
+							t.retweet = true;
+							t.profile_image_url=(function(user) {
+								if(user && user.profile_image_url) {
+									return user.profile_image_url;
+								}
+								else {
+									return "";
+								}
+							}(elem.retweeted_status));
+						}
+						return t;
+					})
+				};
+				res.send(200,response);
+				return;
+			}
+			catch(err) {
+				console.log("[app.js] error: "+err);
+			}
+		}
+    });
+
+}
+
+var postLoveNode = function(req,res) {
+	
+    twit.post('/statuses/update.json', 
+    {status: 'Is it sick if I say that reading Hunger Games makes me hungry?'},
+    function(data) {
+        res.send(200,data);
+    });
+
+}
 
 
 var main = function() {
@@ -116,10 +176,12 @@ var main = function() {
     
     app.get('/twitter/tweets', getTweets);
     app.get('/twitter/banner', getTwitterBanner);
+    app.get('/twitter/favorites', getFavorites);
+    app.get('/twitter/postLoveNode', postLoveNode)
     app.get('/', sayHello);
 
 
-    var port = process.env.PORT || 8080;
+    var port = process.env.PORT || 3000;
 
     app.listen(port, function() {
         console.log("Listening on " + port);
