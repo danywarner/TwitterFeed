@@ -29,6 +29,49 @@ fs.readFile('data/db2.csv', 'utf8', function (err,data) {
 });
 
 
+function formatData(data){
+	var response;
+			try{
+				 response = {tweets:
+					data.map(function(elem){
+						var t = {
+							text:elem.text,
+							screen_name:elem.user.screen_name,
+							name:elem.user.name,
+							profile_image_url:(function(user) {
+								if(user && user.profile_image_url) {
+									return user.profile_image_url;
+								}
+								else {
+									return "";
+								}
+							}(elem.user)),
+							retweet:false
+						}; 
+						if(elem.text && elem.text.substr(0,2) == "RT") {
+							t.text = t.text.substr(t.text.search(":")+2);
+							t.retweet = true;
+							t.profile_image_url=(function(user) {
+								if(user && user.profile_image_url) {
+									return user.profile_image_url;
+								}
+								else {
+									return "";
+								}
+							}(elem.retweeted_status));
+						}
+						return t;
+					})
+				};
+				
+				return response;
+			}
+			catch(err) {
+				console.log("[app.js] error: "+err);
+			}
+}
+
+
 
 var getTweets = function(req, res) {
     var count = 10;
@@ -45,42 +88,7 @@ var getTweets = function(req, res) {
 			return;
 		}
 		else {
-			try{
-				response = {tweets:
-					data.map(function(elem){
-						var t = {
-							text:elem.text,
-							profile_image_url:(function(user) {
-								if(user && user.profile_image_url) {
-									return user.profile_image_url;
-								}
-								else {
-									return "";
-								}
-							}(elem.user)),
-							retweet:false
-						}; 
-						if(elem.text && elem.text.substr(0,2) == "RT") {
-							t.text = t.text.substr(t.text.search(":")+2);
-							t.retweet = true;
-							t.profile_image_url=(function(user) {
-								if(user && user.profile_image_url) {
-									return user.profile_image_url;
-								}
-								else {
-									return "";
-								}
-							}(elem.retweeted_status));
-						}
-						return t;
-					})
-				};
-				res.send(200,response);
-				return;
-			}
-			catch(err) {
-				console.log("[app.js] error: "+err);
-			}
+			response=formatData(data);
 		}
 		res.send(200,response);
     });
@@ -96,60 +104,14 @@ var getTwitterBanner = function(req,res) {
 }
 
 
-var sayHello = function(req,res) {
-    
-    res.writeHead(200, {'Content-type':'text/plain'});
-    res.end('Ejemplo sencillo para leer un feed de twitter con NodeJS Vaya a /twitter/tweets o twitter/banner para ver la funcionalidad');
-}
+
 
 var getFavorites = function(req, res){
 	 twit.get('/favorites/list.json', 
     {screen_name:'danywarner'},
     function(data) {
-       var response = {};
-		if(data instanceof Error) {
-			console.log("TWITTER ERROR: "+JSON.stringify(data));
-			res.send(200,response);
-			return;
-		}
-		else {
-			try{
-				response = {tweets:
-					data.map(function(elem){
-						var t = {
-							text:elem.text,
-							profile_image_url:(function(user) {
-								if(user && user.profile_image_url) {
-									return user.profile_image_url;
-								}
-								else {
-									return "";
-								}
-							}(elem.user)),
-							retweet:false
-						}; 
-						if(elem.text && elem.text.substr(0,2) == "RT") {
-							t.text = t.text.substr(t.text.search(":")+2);
-							t.retweet = true;
-							t.profile_image_url=(function(user) {
-								if(user && user.profile_image_url) {
-									return user.profile_image_url;
-								}
-								else {
-									return "";
-								}
-							}(elem.retweeted_status));
-						}
-						return t;
-					})
-				};
-				res.send(200,response);
-				return;
-			}
-			catch(err) {
-				console.log("[app.js] error: "+err);
-			}
-		}
+       data=formatData(data);
+       res.send(200,data);
     });
 
 }
@@ -164,6 +126,16 @@ var postLoveNode = function(req,res) {
 
 }
 
+var getHome = function(req,res) {
+    
+     twit.get('/statuses/home_timeline.json', 
+    {count: 30},
+    function(data) {
+    	data=formatData(data);
+        res.send(200,data);
+    });
+}
+
 
 var main = function() {
     var app = express();
@@ -174,11 +146,11 @@ var main = function() {
       next();
     });
     
-    app.get('/twitter/tweets', getTweets);
-    app.get('/twitter/banner', getTwitterBanner);
-    app.get('/twitter/favorites', getFavorites);
-    app.get('/twitter/postLoveNode', postLoveNode)
-    app.get('/', sayHello);
+    app.get('/tweets', getTweets);
+    app.get('/banner', getTwitterBanner);
+    app.get('/favorites', getFavorites);
+    app.get('/postLoveNode', postLoveNode)
+    app.get('/', getHome);
 
 
     var port = process.env.PORT || 3000;
@@ -187,3 +159,5 @@ var main = function() {
         console.log("Listening on " + port);
     });
 }
+
+
