@@ -1,13 +1,8 @@
 var express = require('express');
+var Config = require('./config');
 var fs = require('fs');
-var kdt = require('kdt');
-var Config = require('./config'),
-    conf = new Config();
-var coords = [];
-var tree;
-
-var util = require('util');
 var twitter = require('twitter');
+conf = new Config();
 try {
     //var secrets = JSON.parse(process.env.SECRETS);
     var twit = new twitter({
@@ -16,82 +11,32 @@ try {
         access_token_key: conf.twitter.accessToken,
         access_token_secret: conf.twitter.accessTokenSecret
     });
+    
 }
 catch(err) {
-    console.log("SECRETS env variable is not set");
+    console.log(err);
     process.exit(1);
 }
+
 
 fs.readFile('data/db2.csv', 'utf8', function (err,data) {
     if (err) {
         return console.log(err);
     }
-    else {
-        var lines = data.toString().split('\n');
-        var header = lines[0].split('\t');
-        lines = lines.slice(1);
-        lines.forEach(function(line){
-            var tokens = line.split('\t');
-            var coord = {};
-            tokens.forEach(function(t,i,tokens){
-                coord[ header[i] ] = t;
-            });
-            coords.push(coord);
-        });
-        console.log('Size: '+coords.length);
-        buildTree();
+    else {  
         main();
-
     }
 });
 
 
-var distance = function(a,b) {
-    return Math.sqrt(Math.pow(a.LATITUD - b.LATITUD, 2) +  Math.pow(a.LONGITUD - b.LONGITUD, 2));
-}
-var buildTree= function(){
-    tree = kdt.createKdTree(coords, distance, ['LATITUD', 'LONGITUD'])
-}
 
-var getCoordinates = function(req, res) {
-
-    if(!req.query.lat || !req.query.long) {
-        res.send(400,{'errors':['Parametros insuficientes']});
-    }
-    else {
-        try {
-            var count = 1;
-            if(req.query.count) {
-                count = req.query.count;
-            }
-            var nearest = tree.nearest({LATITUD: parseFloat(req.query.lat), LONGITUD: parseFloat(req.query.long)},count)
-            .map(function(elem) {
-                var ret = elem[0];
-                ret.dist = elem[1];
-                return ret;
-            });
-            /*.sort(function(a,b){
-                if (a.dist < b.dist)
-                    return -1;
-                if (a.dist > b.dist)
-                    return 1;
-                return 0;
-            });
-*/
-            res.send(200,{'nearest':nearest});
-        }catch(err) {
-            res.send(400,{'errors':['Something went wrong']});       
-        }
-    }
-
-}
 var getTweets = function(req, res) {
     var count = 10;
     if(req.query.count) {
         count = req.query.count;
     }
     twit.get('/statuses/user_timeline.json', 
-    {screen_name:'UNGRD',count:count,exclude_replies:'false'},
+    {screen_name:'danywarner',count:count,exclude_replies:'false'},
     function(data) {
 	var response = {};
 		if(data instanceof Error) {
@@ -145,52 +90,13 @@ var getTwitterBanner = function(req,res) {
     users/profile_banner.json
     */
     twit.get('/users/profile_banner.json', 
-    {screen_name:'UNGRD'},
+    {screen_name:'danywarner'},
     function(data) {
         res.send(200,data);
     });
 
 }
-var getCoordinates2 = function(req,res) {
-    var count = 10;
-    if(req.query.count) {
-        count = req.query.count;
-    }
 
-    var coord = {
-        LATITUD:req.query.lat,
-        LONGITUD:req.query.long,
-    };
-    var arr = [];
-    for(x in coords) {
-        arr.push( {
-            id:x,
-            dist:distance(coords[x],coord)
-        });
-    }
-    
-    var ret = arr.sort(function(a,b){
-        if (a.dist < b.dist)
-            return -1;
-        if (a.dist > b.dist)
-            return 1;
-        return 0;
-    })
-    .slice(0,count)
-    .map(function(x){
-        return {
-            "ID_DEPARTAMENTO": coords[x.id]["ID_DEPARTAMENTO"],
-            "NOMBRE_DEPARTAMENTO": coords[x.id]["NOMBRE_DEPARTAMENTO"],
-            "ID_MUNICIPIO": coords[x.id]["ID_MUNICIPIO"],
-            "NOMBRE_MUNICIPIO": coords[x.id]["NOMBRE_MUNICIPIO"],
-            "LONGITUD": coords[x.id]["LONGITUD"],
-            "LATITUD": coords[x.id]["LATITUD"],
-            dist: x.dist
-        };
-    });
-
-    res.send(200,{nearest:ret});
-}
 var main = function() {
     var app = express();
 
@@ -200,8 +106,6 @@ var main = function() {
       next();
     });
     
-    app.get('/coordinates', getCoordinates2);
-    //app.get('/coordinates2', getCoordinates2);
     app.get('/twitter/tweets', getTweets);
     app.get('/twitter/banner', getTwitterBanner);
 
