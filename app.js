@@ -86,9 +86,6 @@ var getTweets = function(req, res) {
     });
 }
 var getTwitterBanner = function(req,res) {
-    /*
-    users/profile_banner.json
-    */
     twit.get('/users/profile_banner.json', 
     {screen_name:'danywarner'},
     function(data) {
@@ -96,6 +93,16 @@ var getTwitterBanner = function(req,res) {
     });
 
 }
+
+var sayHello = function(req,res) {
+    
+       // res.send(200,"Ejemplo sencillo para leer un feed de twitter con NodeJS\n
+        //    Vaya a /twitter/tweets o twitter/banner para ver la funcionalidad");
+        res.writeHead(200, {'Content-type':'text/plain'});
+    res.end('Ejemplo sencillo para leer un feed de twitter con NodeJS Vaya a /twitter/tweets o twitter/banner para ver la funcionalidad');
+}
+
+
 
 var main = function() {
     var app = express();
@@ -108,6 +115,7 @@ var main = function() {
     
     app.get('/twitter/tweets', getTweets);
     app.get('/twitter/banner', getTwitterBanner);
+    app.get('/', sayHello);
 
 
     var port = process.env.PORT || 8080;
