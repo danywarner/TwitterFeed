@@ -94,6 +94,7 @@ var getTwitterBanner = function(req,res) {
 
 }
 
+
 var sayHello = function(req,res) {
     
        // res.send(200,"Ejemplo sencillo para leer un feed de twitter con NodeJS\n
