@@ -29,7 +29,7 @@ fs.readFile('data/db2.csv', 'utf8', function (err,data) {
 });
 
 
-function formatData(data){
+function formatTweets(data){
 	var response;
 			try{
 				 response = {tweets:
@@ -60,6 +60,9 @@ function formatData(data){
 								}
 							}(elem.retweeted_status));
 						}
+						if(elem.in_reply_to_status_id_str!=null){
+							t.in_reply_to=elem.in_reply_to_status_id_str;
+						}
 						return t;
 					})
 				};
@@ -88,7 +91,7 @@ var getTweets = function(req, res) {
 			return;
 		}
 		else {
-			response=formatData(data);
+			response=formatTweets(data);
 		}
 		res.send(200,response);
     });
@@ -110,7 +113,7 @@ var getFavorites = function(req, res){
 	 twit.get('/favorites/list.json', 
     {screen_name:'danywarner'},
     function(data) {
-       data=formatData(data);
+       data=formatTweets(data);
        res.send(200,data);
     });
 
@@ -131,7 +134,35 @@ var getHome = function(req,res) {
      twit.get('/statuses/home_timeline.json', 
     {count: 30},
     function(data) {
-    	data=formatData(data);
+    	data=formatTweets(data);
+        res.send(200,data);
+    });
+}
+
+var getMentions = function(req,res) {
+    
+     twit.get('/statuses/mentions_timeline.json', 
+    //{count: 30},
+    function(data) {
+    //	data=formatTweets(data);
+        res.send(200,data);
+    });
+}
+
+var getFollowers = function(req,res) {
+    
+     twit.get('/followers/list.json', 
+    function(data) {
+    //	data=formatTweets(data);
+        res.send(200,data);
+    });
+}
+
+var getFollowing = function(req,res) {
+    
+     twit.get('/friends/list.json', 
+    function(data) {
+    //	data=formatTweets(data);
         res.send(200,data);
     });
 }
@@ -149,7 +180,11 @@ var main = function() {
     app.get('/tweets', getTweets);
     app.get('/banner', getTwitterBanner);
     app.get('/favorites', getFavorites);
-    app.get('/postLoveNode', postLoveNode)
+    app.get('/mentions', getMentions);
+    app.get('/followers', getFollowers);
+    app.get('/following', getFollowing);
+
+    app.get('/postLoveNode', postLoveNode);
     app.get('/', getHome);
 
 
