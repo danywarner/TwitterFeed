@@ -87,13 +87,13 @@ var getTweets = function(req, res) {
 	var response = {};
 		if(data instanceof Error) {
 			console.log("TWITTER ERROR: "+JSON.stringify(data));
-			res.send(200,response);
+			res.status(200).send(response);
 			return;
 		}
 		else {
 			response=formatTweets(data);
 		}
-		res.send(200,response);
+		res.status(200).send(response);
     });
 }
 var getTwitterBanner = function(req,res) {
@@ -101,7 +101,7 @@ var getTwitterBanner = function(req,res) {
     twit.get('/users/profile_banner.json', 
     {screen_name:'danywarner'},
     function(data) {
-        res.send(200,data);
+        res.status(200).send(data);
     });
 
 }
@@ -114,7 +114,7 @@ var getFavorites = function(req, res){
     {screen_name:'danywarner'},
     function(data) {
        data=formatTweets(data);
-       res.send(200,data);
+       res.status(200).send(data);
     });
 
 }
@@ -124,7 +124,7 @@ var postLoveNode = function(req,res) {
     twit.post('/statuses/update.json', 
     {status: 'Is it sick if I say that reading Hunger Games makes me hungry?'},
     function(data) {
-        res.send(200,data);
+        res.status(200).send(data);
     });
 
 }
@@ -135,7 +135,7 @@ var getHome = function(req,res) {
     {count: 30},
     function(data) {
     	data=formatTweets(data);
-        res.send(200,data);
+        res.status(200).send(data);
     });
 }
 
@@ -145,7 +145,7 @@ var getMentions = function(req,res) {
     //{count: 30},
     function(data) {
     //	data=formatTweets(data);
-        res.send(200,data);
+        res.status(200).send(data);
     });
 }
 
@@ -154,7 +154,7 @@ var getFollowers = function(req,res) {
      twit.get('/followers/list.json', 
     function(data) {
     //	data=formatTweets(data);
-        res.send(200,data);
+        res.status(200).send(data);
     });
 }
 
@@ -163,7 +163,7 @@ var getFollowing = function(req,res) {
      twit.get('/friends/list.json', 
     function(data) {
     //	data=formatTweets(data);
-        res.send(200,data);
+        res.status(200).send(data);
     });
 }
 
